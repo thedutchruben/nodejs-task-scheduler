@@ -57,9 +57,10 @@ jobs:
       run: npm run build
 
     - name: Run tests
-      run: npm test
+      run: npm test -- --maxWorkers=1 --forceExit
       env:
         RABBITMQ_URL: amqp://admin:password@localhost:5672
+        NODE_OPTIONS: "--max_old_space_size=4096"
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3

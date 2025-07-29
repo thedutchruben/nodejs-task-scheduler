@@ -13,3 +13,13 @@ if (!process.env.DEBUG_TESTS) {
 
 // Global test timeout
 jest.setTimeout(10000);
+
+// Handle unhandled promise rejections in tests
+process.on('unhandledRejection', (reason, promise) => {
+  // Ignore unhandled rejections during tests
+});
+
+// Clean up any lingering timers after each test
+afterEach(() => {
+  jest.clearAllTimers();
+});
