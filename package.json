@@ -19,17 +19,24 @@
     "docker:stop": "docker-compose down",
     "docker:logs": "docker-compose logs -f"
   },
-  "keywords": ["task", "scheduler", "rabbitmq", "cron", "distributed", "queue"],
+  "keywords": [
+    "task",
+    "scheduler",
+    "rabbitmq",
+    "cron",
+    "distributed",
+    "queue"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "amqplib": "^0.10.3",
     "node-cron": "^3.0.3",
-    "uuid": "^9.0.1",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@types/amqplib": "^0.10.4",
+    "@types/amqplib": "^0.10.7",
     "@types/node": "^20.10.0",
     "@types/node-cron": "^3.0.11",
     "@types/uuid": "^9.0.7",

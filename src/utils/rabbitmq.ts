@@ -2,8 +2,8 @@ import * as amqp from 'amqplib';
 import { ConnectionConfig } from '../types';
 
 export class RabbitMQConnection {
-  private connection: amqp.Connection | null = null;
-  private channel: amqp.Channel | null = null;
+  private connection: any = null;
+  private channel: any = null;
   private config: ConnectionConfig;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 10;
@@ -30,18 +30,28 @@ export class RabbitMQConnection {
   }
 
   async disconnect(): Promise<void> {
-    if (this.channel) {
-      await this.channel.close();
+    try {
+      if (this.channel) {
+        await this.channel.close();
+        this.channel = null;
+      }
+    } catch (error) {
+      console.warn('Error closing channel:', error);
       this.channel = null;
     }
     
-    if (this.connection) {
-      await this.connection.close();
+    try {
+      if (this.connection) {
+        await this.connection.close();
+        this.connection = null;
+      }
+    } catch (error) {
+      console.warn('Error closing connection:', error);
       this.connection = null;
     }
   }
 
-  getChannel(): amqp.Channel {
+  getChannel(): any {
     if (!this.channel) {
       throw new Error('Not connected to RabbitMQ');
     }
