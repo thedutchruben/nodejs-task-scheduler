@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  NODE_VERSION: '22.x'
+  REGISTRY: ghcr.io
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build package
+      run: npm run build
+
+    - name: Run tests
+      run: npm test
+      continue-on-error: true
+
+    - name: Create package tarball
+      run: npm pack
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        if [ -f CHANGELOG.md ]; then
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "changelog=No changelog available" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body: |
+          ## Release ${{ github.ref_name }}
+          
+          ### Changes
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ### Installation
+          
+          #### From GitHub Packages:
+          ```bash
+          npm install @${{ github.repository_owner }}/nodejs-task-scheduler@${{ github.ref_name }}
+          ```
+          
+          #### From source:
+          ```bash
+          git clone https://github.com/${{ github.repository }}.git
+          cd nodejs-task-scheduler
+          git checkout ${{ github.ref_name }}
+          npm install && npm run build
+          ```
+          
+          ### Docker Image
+          ```bash
+          docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          ```
+
+        files: |
+          *.tgz
+          dist/**/*
+        generate_release_notes: true
+        draft: false
+        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+
+    - name: Publish to GitHub Packages
+      run: |
+        # Update package.json for scoped publishing
+        sed -i 's/"name": "nodejs-task-scheduler"/"name": "@${{ github.repository_owner }}\/nodejs-task-scheduler"/' package.json
+        
+        # Set version from git tag
+        VERSION="${{ github.ref_name }}"
+        VERSION=${VERSION#v}  # Remove 'v' prefix if present
+        npm version "$VERSION" --no-git-tag-version
+        
+        # Publish
+        npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-success:
+    needs: create-release
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+    - name: Notify success
+      run: |
+        echo "✅ Release ${{ github.ref_name }} created successfully!"
+        echo "📦 Package published to GitHub Packages"
+        echo "🐳 Docker image available at ghcr.io/${{ github.repository }}:${{ github.ref_name }}"

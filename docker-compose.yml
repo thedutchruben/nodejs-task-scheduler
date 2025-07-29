@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: task-scheduler-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_DEFAULT_VHOST=/
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - task-scheduler-network
+
+  scheduler-node-1:
+    build: .
+    container_name: scheduler-node-1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - RABBITMQ_URL=amqp://admin:password@rabbitmq:5672
+      - NODE_NAME=scheduler-1
+      - NODE_ENV=production
+    volumes:
+      - ./examples:/app/examples
+    networks:
+      - task-scheduler-network
+    restart: unless-stopped
+
+  scheduler-node-2:
+    build: .
+    container_name: scheduler-node-2
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - RABBITMQ_URL=amqp://admin:password@rabbitmq:5672
+      - NODE_NAME=scheduler-2
+      - NODE_ENV=production
+    volumes:
+      - ./examples:/app/examples
+    networks:
+      - task-scheduler-network
+    restart: unless-stopped
+
+  scheduler-node-3:
+    build: .
+    container_name: scheduler-node-3
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - RABBITMQ_URL=amqp://admin:password@rabbitmq:5672
+      - NODE_NAME=scheduler-3
+      - NODE_ENV=production
+    volumes:
+      - ./examples:/app/examples
+    networks:
+      - task-scheduler-network
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
+    driver: local
+
+networks:
+  task-scheduler-network:
+    driver: bridge
