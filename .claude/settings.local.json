@@ -9,7 +9,8 @@
       "Bash(npx ts-node:*)",
       "Bash(rm:*)",
       "Bash(npm run lint)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm test)"
     ],
     "deny": []
   }
