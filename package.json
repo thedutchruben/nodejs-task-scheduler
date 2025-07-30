@@ -27,7 +27,15 @@
     "distributed",
     "queue"
   ],
-  "author": "",
+  "author": "Ruben de Roos",
+  "homepage": "https://github.com/thedutchruben/nodejs-task-scheduler#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thedutchruben/nodejs-task-scheduler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thedutchruben/nodejs-task-scheduler/issues"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=16.0.0"
