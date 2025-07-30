@@ -4,15 +4,25 @@ import { RabbitMQConnection } from '../utils/rabbitmq';
 export class QueueManager {
   private connection: RabbitMQConnection;
   private queues: Map<string, QueueConfig> = new Map();
+  private queuePrefix: string;
 
-  constructor(connection: RabbitMQConnection) {
+  constructor(connection: RabbitMQConnection, queuePrefix: string = '') {
     this.connection = connection;
+    this.queuePrefix = queuePrefix;
+  }
+
+  private applyPrefix(queueName: string): string {
+    if (!this.queuePrefix) {
+      return queueName;
+    }
+    return `${this.queuePrefix}${queueName}`;
   }
 
   async createQueue(config: QueueConfig): Promise<void> {
     const channel = this.connection.getChannel();
+    const prefixedName = this.applyPrefix(config.name);
     
-    await channel.assertQueue(config.name, {
+    await channel.assertQueue(prefixedName, {
       durable: config.durable !== false,
       exclusive: config.exclusive || false,
       autoDelete: config.autoDelete || false,
@@ -20,29 +30,32 @@ export class QueueManager {
     });
 
     this.queues.set(config.name, config);
-    console.log(`Queue ${config.name} created/asserted`);
+    console.log(`Queue ${prefixedName} created/asserted`);
   }
 
   async deleteQueue(queueName: string): Promise<void> {
     const channel = this.connection.getChannel();
+    const prefixedName = this.applyPrefix(queueName);
     
-    await channel.deleteQueue(queueName);
+    await channel.deleteQueue(prefixedName);
     this.queues.delete(queueName);
-    console.log(`Queue ${queueName} deleted`);
+    console.log(`Queue ${prefixedName} deleted`);
   }
 
   async purgeQueue(queueName: string): Promise<void> {
     const channel = this.connection.getChannel();
+    const prefixedName = this.applyPrefix(queueName);
     
-    await channel.purgeQueue(queueName);
-    console.log(`Queue ${queueName} purged`);
+    await channel.purgeQueue(prefixedName);
+    console.log(`Queue ${prefixedName} purged`);
   }
 
   async getQueueInfo(queueName: string): Promise<any> {
     const channel = this.connection.getChannel();
+    const prefixedName = this.applyPrefix(queueName);
     
     try {
-      const queueInfo = await channel.checkQueue(queueName);
+      const queueInfo = await channel.checkQueue(prefixedName);
       return {
         queue: queueName,
         messageCount: queueInfo.messageCount,
@@ -68,9 +81,10 @@ export class QueueManager {
     routingKey: string = ''
   ): Promise<void> {
     const channel = this.connection.getChannel();
+    const prefixedQueueName = this.applyPrefix(queueName);
     
-    await channel.bindQueue(queueName, exchangeName, routingKey);
-    console.log(`Queue ${queueName} bound to exchange ${exchangeName} with routing key: ${routingKey}`);
+    await channel.bindQueue(prefixedQueueName, exchangeName, routingKey);
+    console.log(`Queue ${prefixedQueueName} bound to exchange ${exchangeName} with routing key: ${routingKey}`);
   }
 
   async createExchange(
@@ -105,7 +119,7 @@ export class QueueManager {
       arguments: {
         'x-message-ttl': 60000,
         'x-dead-letter-exchange': '',
-        'x-dead-letter-routing-key': 'job_queue'
+        'x-dead-letter-routing-key': this.applyPrefix('job_queue')
       }
     });
   }

@@ -5,12 +5,21 @@ import { RabbitMQConnection } from '../utils/rabbitmq';
 export class JobWorker {
   private connection: RabbitMQConnection;
   private config: WorkerConfig;
+  private queuePrefix: string;
   private isRunning = false;
   private activeJobs = new Set<string>();
 
-  constructor(connection: RabbitMQConnection, config: WorkerConfig) {
+  constructor(connection: RabbitMQConnection, config: WorkerConfig, queuePrefix: string = '') {
     this.connection = connection;
     this.config = config;
+    this.queuePrefix = queuePrefix;
+  }
+
+  private applyPrefix(queueName: string): string {
+    if (!this.queuePrefix) {
+      return queueName;
+    }
+    return `${this.queuePrefix}${queueName}`;
   }
 
   async start(): Promise<void> {
@@ -21,10 +30,11 @@ export class JobWorker {
     const channel = this.connection.getChannel();
     
     for (const queueName of this.config.queues) {
-      await channel.assertQueue(queueName, { durable: true });
+      const prefixedQueueName = this.applyPrefix(queueName);
+      await channel.assertQueue(prefixedQueueName, { durable: true });
       await channel.prefetch(this.config.concurrency);
       
-      await channel.consume(queueName, async (msg) => {
+      await channel.consume(prefixedQueueName, async (msg) => {
         if (msg) {
           await this.processMessage(msg, queueName);
         }
@@ -141,9 +151,10 @@ export class JobWorker {
     setTimeout(async () => {
       const channel = this.connection.getChannel();
       const queueName = `job_queue_${jobMessage.config.handler}`;
+      const prefixedQueueName = this.applyPrefix(queueName);
       
       const message = Buffer.from(JSON.stringify(jobMessage));
-      await channel.sendToQueue(queueName, message, {
+      await channel.sendToQueue(prefixedQueueName, message, {
         persistent: true,
         priority: jobMessage.config.priority || 0
       });
@@ -153,11 +164,12 @@ export class JobWorker {
   private async sendToDeadLetterQueue(jobMessage: JobMessage): Promise<void> {
     const channel = this.connection.getChannel();
     const deadLetterQueue = 'dead_letter_queue';
+    const prefixedDeadLetterQueue = this.applyPrefix(deadLetterQueue);
     
-    await channel.assertQueue(deadLetterQueue, { durable: true });
+    await channel.assertQueue(prefixedDeadLetterQueue, { durable: true });
     
     const message = Buffer.from(JSON.stringify(jobMessage));
-    await channel.sendToQueue(deadLetterQueue, message, { persistent: true });
+    await channel.sendToQueue(prefixedDeadLetterQueue, message, { persistent: true });
     
     console.log(`Job ${jobMessage.id} sent to dead letter queue`);
   }

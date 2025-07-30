@@ -6,9 +6,11 @@ import { RabbitMQConnection } from '../utils/rabbitmq';
 export class JobScheduler {
   private connection: RabbitMQConnection;
   private cronJobs: Map<string, cron.ScheduledTask> = new Map();
+  private queuePrefix: string;
 
-  constructor(connection: RabbitMQConnection) {
+  constructor(connection: RabbitMQConnection, queuePrefix: string = '') {
     this.connection = connection;
+    this.queuePrefix = queuePrefix;
   }
 
   async scheduleCronJob(config: CronJobConfig): Promise<string> {
@@ -83,6 +85,7 @@ export class JobScheduler {
   }
 
   private getQueueForJob(config: JobConfig): string {
-    return `job_queue_${config.handler}`;
+    const queueName = `job_queue_${config.handler}`;
+    return this.queuePrefix ? `${this.queuePrefix}${queueName}` : queueName;
   }
 }

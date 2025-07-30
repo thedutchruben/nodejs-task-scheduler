@@ -47,6 +47,7 @@ export interface QueueConfig {
 export interface ConnectionConfig {
   url: string;
   options?: any;
+  queuePrefix?: string;
 }
 
 export enum JobStatus {

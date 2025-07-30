@@ -22,13 +22,15 @@ export class TaskScheduler {
   private loadBalancer: LoadBalancer;
   private decoratorRegistry: DecoratorRegistry;
   private nodeId: string;
+  private queuePrefix: string;
   private isInitialized = false;
 
   constructor(connectionConfig: ConnectionConfig) {
     this.nodeId = uuidv4();
+    this.queuePrefix = connectionConfig.queuePrefix || '';
     this.connection = new RabbitMQConnection(connectionConfig);
-    this.scheduler = new JobScheduler(this.connection);
-    this.queueManager = new QueueManager(this.connection);
+    this.scheduler = new JobScheduler(this.connection, this.queuePrefix);
+    this.queueManager = new QueueManager(this.connection, this.queuePrefix);
     this.loadBalancer = new LoadBalancer(this.connection, this.nodeId);
     this.decoratorRegistry = DecoratorRegistry.getInstance();
   }
@@ -73,7 +75,7 @@ export class TaskScheduler {
       await this.queueManager.createQueue({ name: queueName });
     }
 
-    const worker = new JobWorker(this.connection, config);
+    const worker = new JobWorker(this.connection, config, this.queuePrefix);
     this.workers.set(config.name, worker);
     
     const nodeInfo: Omit<NodeInfo, 'lastHeartbeat'> = {

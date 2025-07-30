@@ -17,6 +17,7 @@ A distributed task scheduler for Node.js using RabbitMQ with support for cron jo
 - **TypeScript Support**: Full TypeScript support with type definitions
 - **Auto-reconnection**: Automatic reconnection to RabbitMQ on connection loss
 - **Health Monitoring**: Built-in heartbeat system for node health monitoring
+- **Queue Prefixing**: Configurable queue name prefixes for multi-tenant applications
 
 ## Installation
 
@@ -95,12 +96,18 @@ await scheduler.scheduleCronJob({
 ```typescript
 const connectionConfig = {
   url: 'amqp://localhost:5672',
+  queuePrefix: 'myapp_', // Optional: prefix for all queue names
   options: {
     heartbeat: 60,
     // Other amqplib connection options
   }
 };
 ```
+
+**Configuration Options:**
+- `url`: RabbitMQ connection URL
+- `queuePrefix` (optional): String to prefix all queue names (useful for multi-tenant applications)
+- `options` (optional): Additional connection options passed to amqplib
 
 ### Worker Configuration
 
