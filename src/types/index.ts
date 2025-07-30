@@ -2,6 +2,7 @@ export interface JobConfig {
   id: string;
   name: string;
   handler: string;
+  queue: string;
   data?: any;
   priority?: number;
   delay?: number;

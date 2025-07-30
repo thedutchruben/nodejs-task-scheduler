@@ -85,7 +85,6 @@ export class JobScheduler {
   }
 
   private getQueueForJob(config: JobConfig): string {
-    const queueName = `job_queue_${config.handler}`;
-    return this.queuePrefix ? `${this.queuePrefix}${queueName}` : queueName;
+    return this.queuePrefix ? `${this.queuePrefix}${config.queue}` : config.queue;
   }
 }

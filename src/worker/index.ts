@@ -31,14 +31,20 @@ export class JobWorker {
     
     for (const queueName of this.config.queues) {
       const prefixedQueueName = this.applyPrefix(queueName);
+      console.log(`Setting up consumer for queue: ${prefixedQueueName}`);
+      
       await channel.assertQueue(prefixedQueueName, { durable: true });
       await channel.prefetch(this.config.concurrency);
       
-      await channel.consume(prefixedQueueName, async (msg) => {
+      const consumerTag = await channel.consume(prefixedQueueName, async (msg) => {
         if (msg) {
           await this.processMessage(msg, queueName);
         }
+      }, {
+        noAck: false
       });
+      
+      console.log(`Consumer started for queue ${prefixedQueueName} with tag: ${consumerTag.consumerTag}`);
     }
 
     this.isRunning = true;
@@ -150,8 +156,7 @@ export class JobWorker {
   private async scheduleRetry(jobMessage: JobMessage, delay: number): Promise<void> {
     setTimeout(async () => {
       const channel = this.connection.getChannel();
-      const queueName = `job_queue_${jobMessage.config.handler}`;
-      const prefixedQueueName = this.applyPrefix(queueName);
+      const prefixedQueueName = this.applyPrefix(jobMessage.config.queue);
       
       const message = Buffer.from(JSON.stringify(jobMessage));
       await channel.sendToQueue(prefixedQueueName, message, {
