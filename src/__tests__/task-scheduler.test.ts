@@ -145,6 +145,7 @@ describe('TaskScheduler', () => {
         id: 'test-job-1',
         name: 'Test Job',
         handler: 'test-handler',
+        queue: 'test-queue',
         data: { message: 'hello' }
       };
 
@@ -157,6 +158,7 @@ describe('TaskScheduler', () => {
         id: 'test-cron-1',
         name: 'Test Cron Job',
         handler: 'test-handler',
+        queue: 'test-queue',
         schedule: '0 9 * * *',
         data: { message: 'daily task' }
       };
@@ -170,6 +172,7 @@ describe('TaskScheduler', () => {
         id: 'test-cron-cancel',
         name: 'Test Cron Job to Cancel',
         handler: 'test-handler',
+        queue: 'test-queue',
         schedule: '0 9 * * *',
         data: {}
       };

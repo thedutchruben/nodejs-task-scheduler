@@ -111,6 +111,7 @@ export class DecoratorRegistry {
         id: jobId,
         name: metadata.name,
         handler: metadata.name,
+        queue: metadata.queue || 'default',
         schedule: metadata.schedule,
         timezone: metadata.timezone,
         data: {}, // Cron jobs typically don't need initial data
@@ -165,6 +166,7 @@ export class DecoratorRegistry {
       id: `${className}-${methodName}-${Date.now()}`,
       name: targetMetadata.name,
       handler: targetMetadata.name,
+      queue: targetMetadata.queue || 'default',
       data,
       priority: targetMetadata.priority,
       attempts: targetMetadata.attempts,
