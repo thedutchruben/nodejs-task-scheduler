@@ -1,6 +1,6 @@
 {
   "name": "nodejs-task-scheduler",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Distributed task scheduler using RabbitMQ with cron and direct job execution",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
