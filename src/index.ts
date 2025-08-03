@@ -44,6 +44,7 @@ export class TaskScheduler {
     await this.queueManager.setupDeadLetterQueue();
     await this.queueManager.setupDelayedJobQueue();
     await this.loadBalancer.start();
+    await this.scheduler.startMasterElection();
     
     this.isInitialized = true;
     console.log(`TaskScheduler initialized with node ID: ${this.nodeId}`);
@@ -57,6 +58,7 @@ export class TaskScheduler {
       console.log(`Worker ${name} stopped`);
     }
     
+    await this.scheduler.stopMasterElection();
     await this.loadBalancer.stop();
     await this.connection.disconnect();
     
@@ -172,6 +174,16 @@ export class TaskScheduler {
   getCronJobs(): string[] {
     this.ensureInitialized();
     return this.scheduler.getCronJobs();
+  }
+
+  isLeader(): boolean {
+    this.ensureInitialized();
+    return this.scheduler.isLeader();
+  }
+
+  getSchedulerNodeId(): string {
+    this.ensureInitialized();
+    return this.scheduler.getNodeId();
   }
 
   // Decorator-based methods
