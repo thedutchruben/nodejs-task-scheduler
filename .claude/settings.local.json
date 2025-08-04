@@ -14,7 +14,11 @@
       "Bash(npm test:*)",
       "Bash(node:*)",
       "Bash(touch:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(export RABBITMQ_URL=\"amqp://admin:password@localhost:5672\")",
+      "Bash(timeout 60 npx ts-node test-multinode.ts)",
+      "Bash(timeout 60 npx ts-node test-simple-election.ts)",
+      "Bash(timeout 45 npx ts-node test-quick-election.ts)"
     ],
     "deny": []
   }

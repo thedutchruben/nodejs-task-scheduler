@@ -144,6 +144,11 @@ export class LoadBalancer {
   }
 
   private async sendOfflineHeartbeat(): Promise<void> {
+    if (!this.connection.isConnected()) {
+      // Silently skip offline heartbeat when not connected - this is expected during shutdown
+      return;
+    }
+    
     const channel = this.connection.getChannel();
     
     const heartbeat = {

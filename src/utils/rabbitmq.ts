@@ -63,12 +63,27 @@ export class RabbitMQConnection {
   }
 
   private async handleConnectionError(error: Error): Promise<void> {
-    console.error('RabbitMQ connection error:', error);
+    // Suppress expected election and cleanup errors
+    const isExpectedError = error.message && (
+      error.message.includes('ACCESS_REFUSED') ||
+      error.message.includes('NOT_FOUND') ||
+      error.message.includes('exclusive use') ||
+      error.message.includes('404') ||
+      error.message.includes('403')
+    );
+    
+    if (!isExpectedError) {
+      console.error('RabbitMQ connection error:', error);
+    }
+    
     await this.handleReconnect();
   }
 
   private async handleConnectionClose(): Promise<void> {
-    console.log('RabbitMQ connection closed');
+    // Only log connection close if it's unexpected (not during shutdown)
+    if (this.reconnectAttempts < 2) {
+      console.log('RabbitMQ connection closed');
+    }
     this.connection = null;
     this.channel = null;
     await this.handleReconnect();
@@ -81,7 +96,11 @@ export class RabbitMQConnection {
     }
 
     this.reconnectAttempts++;
-    console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+    
+    // Only log reconnection attempts if they're taking a while (after attempt 3)
+    if (this.reconnectAttempts > 3) {
+      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+    }
     
     await new Promise(resolve => setTimeout(resolve, this.reconnectDelay));
     await this.connect();
